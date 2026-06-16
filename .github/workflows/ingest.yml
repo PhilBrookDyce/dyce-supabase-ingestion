@@ -1,0 +1,39 @@
+name: Daily SharePoint → Supabase Ingestion
+
+on:
+  schedule:
+    # Runs at 1:00 PM UTC every day
+    # If your SharePoint is on UK time, UTC = GMT in winter, BST (UTC+1) in summer
+    # To always run at 1pm UK time you may need to adjust to 12:00 UTC in summer
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    # Allows manual trigger from the GitHub Actions tab anytime
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run ingestion script
+        env:
+          SHAREPOINT_URL: https://dyceenergy.sharepoint.com
+          SHAREPOINT_SITE: /sites/DigitalDataInsights
+          SHAREPOINT_FOLDER: /Shared Documents/Projects/CRM/Periodic Files
+          SHAREPOINT_USERNAME: ${{ secrets.SHAREPOINT_USERNAME }}
+          SHAREPOINT_PASSWORD: ${{ secrets.SHAREPOINT_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/sharepoint_to_supabase.py
